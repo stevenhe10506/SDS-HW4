@@ -1,0 +1,180 @@
+---
+title: "HW4"
+author: "Steven He"
+date: "2024-02-13"
+output:
+  pdf_document: default
+  html_document: default
+---
+EID: shh957
+
+git: https://github.com/stevenhe10506/SDS-HW4.git
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE ,echo = FALSE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(mosaic)
+options(scipen=999)
+```
+
+## Qustion 1
+### Theory 1
+```{r cars}
+gas <- read.csv("gasprices.csv")
+boot_comp <- do(10000)*diffmean(Price ~ Competitors, data = mosaic::resample(gas))
+conf <- confint(boot_comp, level = .95)
+conf
+```
+
+Claim: Gas stations charge more if lack lack direct competition in sight. 
+
+Evidence: We can take bootstrap samples of the difference in mean gas price between gas stations with competitors and without competitors. We end with a 95 percent confidence interval of `r conf$lower` and `r conf$ upper`. Because the confidence interval is from a negative number to a positive number, we can't say that either type of gas station charges more since the true difference in means could be positive or negative, and so the claim is unsupported by the data. 
+
+Conclusion: The theory that gas stations charge more with a lack of competition is unsupported by the data. 
+
+### Theory 2
+```{r}
+boot_income <- do(10000)*(coef(lm(Price ~ Income, data = mosaic::resample(gas)))[2])
+conf_income <- confint(boot_income, level = .95)
+conf_income
+```
+
+Claim: The richer the area, the higher the gas prices.
+
+Evidence: We can take a bootstrap samples of the Beta for the linear regression model of gas price and income. We find that the beta is between `r conf_income$lower` and `r conf_income$upper` with 95% confidence. we can see that the intervals are positive showing a positive correlation, but is extremely small. So the claim is supported by the data but the association is very small. 
+
+Conclusion: The theory is correct but the association between gas price and income is very small. 
+
+### Theory 3
+```{r}
+boot_stop <- do(10000)*diffmean(Price ~ Stoplight, data = mosaic::resample(gas))
+conf_stop <- confint(boot_stop, level = .95)
+conf_stop
+```
+
+Claim: Gas stations at stoplights charge more.
+
+Evidence: We can take bootstrap samples of the difference in mean gas price between gas stations at stoplights and not at stoplights. We end with a 95 percent confidence interval of `r conf_stop$lower` and `r conf_stop$ upper`. Because the confidence interval is from a negative number to a positive number, we can't say that either type of gas station charges more since the true difference in means could be positive or negative, and so the claim is unsupported by the data. 
+
+Conclusion: The theory that gas stations charge more at stoplights is unsupported by the data. 
+
+### Theory 4
+```{r}
+boot_highway <- do(10000)*diffmean(Price ~ Highway, data = mosaic::resample(gas))
+conf_highway <- confint(boot_highway, level = .95)
+conf_highway
+```
+
+Claim: Gas stations with direct highway access charge more.
+
+Evidence: We can take bootstrap samples of the difference in mean gas price between gas stations with highway access and without highway access. We end with a 95 percent confidence interval of `r conf_highway$lower` and `r conf_highway$ upper`. Because the confidence interval is fully positive, we can say with 95 percent confidence that gas stations with direct highway access charge more. The difference is within a few cents, so it is not extremely large but still significant.
+
+Conclusion: The theory that gas stations charge more at stoplights is support by the data. 
+
+### Theory 5
+```{r}
+gasshell <- mutate(gas, isShell = Brand == "Shell")
+boot_shell <- do(10000)*diffmean(Price ~ isShell, data = mosaic::resample(gasshell))
+conf_shell <- confint(boot_shell, level = .95)
+conf_shell
+```
+
+Claim: Shell charges more than all other non-Shell brands.
+
+Evidence: We can take bootstrap samples of the difference in mean gas price between Shell gas stations and non-Shell gas stations. We end with a 95 percent confidence interval of `r conf_stop$lower` and `r conf_stop$ upper`. Because the confidence interval is from a negative number to a positive number, we can't say that either type of gas station charges more since the true difference in means could be positive or negative, and so the claim is unsupported by the data. 
+
+Conclusion: The theory that Shell gas stations charge than all other brands is unsupported by the data. 
+
+## Question 2
+### Part A
+```{r pressure, echo=FALSE}
+cars = read.csv("sclass.csv")
+filteredcars = filter(cars, year == 2011, trim == "63 AMG")
+boot_cars = do(10000)*mean(~mileage, data = mosaic::resample(filteredcars))
+
+conf <- confint(boot_cars, level = 0.95)
+conf
+```
+Based on the 116 cars which have a make year of 2011 and trim of 63 AMG, we can estimate with 95% confidence that the average mileage of a 2011 S-Class 63 AMG is between `r round(conf$lower)` and `r round(conf$upper)`.
+
+### Part B
+```{r}
+filteredcars2 <- filter(cars, year == 2014, trim == "550")
+filteredcars2 <- mutate(filteredcars2, isBlack = color == "Black")
+
+boot_cars2 <- do(10000)*prop(~isBlack, data = mosaic::resample(filteredcars2))
+conf2 <- confint(boot_cars2, level = .95)
+conf2
+```
+
+Based on the 2889 cars which have a make year of 2014 and trim of 550, we can estimate with 95% confidence that the average proportion of 2014 S-Class 550s that were painted black is between `r round(conf2$lower, 3)` and `r round(conf2$upper, 3)`.
+
+## Question 3
+### Part A
+```{r}
+nbc <- read.csv("nbc_pilotsurvey.csv")
+nbcfilter <- filter(nbc, Show == "Living with Ed" | Show == "My Name is Earl")
+boot_nbc <- do(10000)*diffmean(Q1_Happy ~ Show, data = mosaic::resample(nbcfilter))
+conf_edearl <- confint(boot_nbc, level = .95)
+conf_edearl
+```
+
+Question: Is there evidence that people are happier watching either "Living with Ed" or "My Name is Earl"?
+
+Approach: We filtered the dataset to only include viewers of "Living with Ed" or "My Name is Earl" and took bootstrap samples of the difference in mean happiness (diffmean).
+
+Results: We have a 95 percent confidence interval of `r round(conf_edearl$lower, 4)` and `r round(conf_edearl$upper, 4)`. 
+
+Conclusion: Because the interval contains both negative and positive numbers, we can't say that one show makes people happier because the difference in means could be positive or negative. So the answer is that there doesn't appear to be evidence that viewers of "Living with Ed" or "My Name is Earl" are happier than the other. 
+
+### Part B
+```{r}
+nbcfilter2 <- filter(nbc, Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+boot_annoy <- do(10000)*diffmean(Q1_Annoyed ~ Show, data = mosaic::resample(nbcfilter2))
+conf_annoy <- confint(boot_annoy, level = .95)
+conf_annoy
+```
+
+Question: Is there evidence that "The Biggest Loser" or "The Apprentice: Los Angeles" consistently produces a higher mean Q1_Annoyed response among viewers?
+
+Approach:  We filtered the dataset to only include viewers of "The Biggest Loser" or "The Apprentice: Los Angeles" and took bootstrap samples of the difference in mean annoyance (diffmean). 
+
+Results: We have a 95 percent confidence interval of `r round(conf_annoy$lower, 4)` and `r round(conf_annoy$upper, 4)`.
+
+Conclusion: Because the entire interval is negative, we can conclude that "The Apprentice" made viewers more annoyed than "The Biggest Loser" because we are 95 percent confident that difference in mean will always be negative. So Q1_Annoyed is, on average, more  for "The Apprentice" than for "The Biggest Loser".
+
+### Part C
+```{r}
+nbcdance <- filter(nbc, Show == "Dancing with the Stars")
+nbcdance <- mutate(nbcdance, abovefour = ifelse(Q2_Confusing > 3, yes = TRUE, no = FALSE))
+boot_confuse<- do(10000)*prop(~abovefour, data = mosaic::resample(nbcdance))
+conf_confuse <- confint(boot_confuse)
+conf_confuse
+```
+
+Question: What proportion of "Dancing with the Stars" watchers would we expect to give a response of 4 or greater to the “Q2_Confusing” question? 
+
+Approach:  We filtered the dataset to only include viewers of "Dancing with the Stars" and created a new variable that was true if the response with 4 or 5 and false if below 4. We then took bootstrap samples of the proportion of 4 or 5 responses to the Q2_Confusing question (prop). 
+
+Result: We have a 95 percent confidence interval of `r round(conf_confuse$lower, 4)` and `r round(conf_confuse$upper, 4)`.
+
+Conclusion: We are 95 percent confident that the proportion of "Dancing with the Stars" viewers who responded a 4 or 5 on the Q2_Confusing question is between `r round(conf_confuse$lower, 4)` and `r round(conf_confuse$upper, 4)`.
+
+## Question 4
+
+```{r}
+ebay <- read.csv("ebay.csv")
+boot_ebay <- do(10000)*diffmean(rev_ratio ~ adwords_pause, data = mosaic::resample(ebay))
+conf_ebay <- confint(boot_ebay, level = .95)
+conf_ebay
+```
+
+Question: Is the revenue ratio is the same in the treatment and control groups, or does the data favors the idea that paid advertising on Google creates extra revenue for EBay?
+
+Approach:  We took bootstrap samples from the dataset to get the difference in mean revenue ratio between regions with and without ad pause (diffmean).
+
+Results: We have a 95 percent confidence interval of `r round(conf_ebay$lower, 4)` and `r round(conf_ebay$upper, 4)`.
+
+Conclusion: Because the entire interval is negative, we can conclude that the ad pause did lower the revenue ratio because we are 95 percent confident that difference in mean will always be negative. The difference in ratios ranges from several percent which is not extremely large but still significant. Whether this change is optimal for Ebay would depend on whether the amount saved from not bidding on search words is more than the lost revunue.  
